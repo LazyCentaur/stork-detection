@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Stork Watcher</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: sans-serif; background-color: #333; text-align: center; margin-top: 50px; }
+        h1 { color: #333; }
+        #detection-image { 
+            max-width: 90%; 
+            height: auto; 
+            border: 5px solid #fff; 
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            margin-top: 20px;
+        }
+        #last-updated { font-style: italic; color: #666; }
+        .chart-container { position: relative; height: 40vh; width: 80vw; margin: 40px auto; }
+    </style>
+</head>
+<body>
+    <h1>🤖 AI Stork Watcher</h1>
+    <p>Showing the latest detection from the nest.</p>
+    
+    <img id="detection-image" src="" alt="Waiting for detection...">
+    <p id="last-updated">Last updated: Never</p>
+
+    <hr style="margin: 40px 0;">
+    <h2>Detection History</h2>
+
+    <div class="chart-container">
+        <canvas id="stork-chart"></canvas>
+    </div>
+
+    <script>
+        let storkChart; // To hold the chart instance
+
+        function fetchLatestDetection() {
+            fetch('/latest_detection')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.filename) {
+                        const imageUrl = '/detections/' + data.filename + '?t=' + new Date().getTime();
+                        document.getElementById('detection-image').src = imageUrl;
+                        document.getElementById('last-updated').innerText = 'Last updated: ' + new Date().toLocaleTimeString();
+                    }
+                })
+                .catch(error => console.error('Error fetching detection:', error));
+        }
+
+        function renderDetectionChart(chartData) {
+            const ctx = document.getElementById('stork-chart').getContext('2d');
+            
+            if (storkChart) {
+                storkChart.data.labels = chartData.labels;
+                storkChart.data.datasets[0].data = chartData.data;
+                storkChart.update();
+            } else {
+                storkChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: chartData.labels,
+                        datasets: [{
+                            label: 'Number of Storks Detected',
+                            data: chartData.data,
+                            borderColor: 'rgb(75, 192, 192)',
+                            tension: 0.1
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    stepSize: 1
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        function fetchChartData() {
+            fetch('/detection_data')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.labels) {
+                        renderDetectionChart(data);
+                    }
+                })
+                .catch(error => console.error('Error fetching chart data:', error));
+        }
+
+        function updateAllData() {
+            fetchLatestDetection();
+            fetchChartData();
+        }
+
+        // Initial call when page loads
+        updateAllData();
+
+        // Set interval to update every 10 seconds
+        setInterval(updateAllData, 10000);
+    </script>
+</body>
+</html>
