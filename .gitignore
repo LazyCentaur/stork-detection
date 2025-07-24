@@ -1,0 +1,18 @@
+# Python virtual environment
+venv/
+
+# Python cache files
+__pycache__/
+*.pyc
+
+# Ultralytics results folders
+runs/
+
+# Dataset cache files
+dataset/images/train.cache
+dataset/images/val.cache
+dataset/labels/train.cache
+dataset/labels/val.cache
+
+# Operating system-specific files
+.DS_Store
