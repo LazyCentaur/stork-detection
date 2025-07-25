@@ -5,53 +5,71 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Stork Watcher</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        body { font-family: sans-serif; background-color: #333; text-align: center; margin-top: 50px; }
-        h1 { color: #333; }
-        #detection-image { 
-            max-width: 90%; 
-            height: auto; 
-            border: 5px solid #fff; 
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-            margin-top: 20px;
-        }
-        #last-updated { font-style: italic; color: #666; }
-        .chart-container { position: relative; height: 40vh; width: 80vw; margin: 40px auto; }
-    </style>
+    <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
-    <h1>🤖 AI Stork Watcher</h1>
-    <p>Showing the latest detection from the nest.</p>
-    
-    <img id="detection-image" src="" alt="Waiting for detection...">
-    <p id="last-updated">Last updated: Never</p>
+    <header>
+        <h1>🤖 AI Stork Watcher</h1>
+        <p>Showing the latest detection from the nest.</p>
+    </header>
 
-    <hr style="margin: 40px 0;">
-    <h2>Detection History</h2>
+    <div class="sidebar">
+        <h2>Last Detection</h2>
+        <img id="detection-image" src="" alt="Waiting for detection...">
+        <p id="last-updated">Last updated: Never</p>
 
-    <div class="chart-container">
-        <canvas id="stork-chart"></canvas>
+        <h3>Recent:</h3>
+        <div id="thumbnail-gallery" class="thumbnail-gallery"></div>
     </div>
 
-    <script>
-        let storkChart; // To hold the chart instance
+    <main class="main-content"> 
+        <div class="chart-container">
+            <h2>Detection History (Last 24h)</h2>
+            <canvas id="history-detection"></canvas>
+            <div>
+                <a href="/download_log" class="download-btn">Download History (.csv)</a>
+            </div>
+        </div>
 
+        <div class="chart-container">
+            <h2>Average Activity per Hour</h2>
+            <canvas id="hourly-chart"></canvas>
+        </div>
+    </main>
+
+    <script>
+        let storkChart, hourlyChart; // We now have two chart instances
+    
+        // --- Functions for the image and LINE chart ---
         function fetchLatestDetection() {
             fetch('/latest_detection')
                 .then(response => response.json())
                 .then(data => {
-                    if (data.filename) {
-                        const imageUrl = '/detections/' + data.filename + '?t=' + new Date().getTime();
+                    const gallery = document.getElementById('thumbnail-gallery');
+                    gallery.innerHTML = ''; // Clear old thumbnails
+
+                    if (data.recent_files && data.recent_files.length > 0) {
+                        // The first image in the list is the most recent one
+                        const latestImageFile = data.recent_files[0];
+                        const imageUrl = '/detections/' + latestImageFile + '?t=' + new Date().getTime();
+                        
                         document.getElementById('detection-image').src = imageUrl;
                         document.getElementById('last-updated').innerText = 'Last updated: ' + new Date().toLocaleTimeString();
+
+                        // Loop through the rest of the images (from the 2nd to the 6th) to create thumbnails
+                        for (let i = 1; i < data.recent_files.length; i++) {
+                            const thumbUrl = '/detections/' + data.recent_files[i];
+                            const imgElement = document.createElement('img');
+                            imgElement.src = thumbUrl;
+                            gallery.appendChild(imgElement);
+                        }
                     }
                 })
-                .catch(error => console.error('Error fetching detection:', error));
+                .catch(error => console.error('Error fetching detections:', error));
         }
-
+    
         function renderDetectionChart(chartData) {
-            const ctx = document.getElementById('stork-chart').getContext('2d');
-            
+            const ctx = document.getElementById('history-detection').getContext('2d');
             if (storkChart) {
                 storkChart.data.labels = chartData.labels;
                 storkChart.data.datasets[0].data = chartData.data;
@@ -69,19 +87,12 @@
                         }]
                     },
                     options: {
-                        scales: {
-                            y: {
-                                beginAtZero: true,
-                                ticks: {
-                                    stepSize: 1
-                                }
-                            }
-                        }
+                        scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
                     }
                 });
             }
         }
-
+    
         function fetchChartData() {
             fetch('/detection_data')
                 .then(response => response.json())
@@ -90,18 +101,60 @@
                         renderDetectionChart(data);
                     }
                 })
-                .catch(error => console.error('Error fetching chart data:', error));
+                .catch(error => console.error('Error fetching line chart data:', error));
         }
-
+    
+        // --- Functions for the BAR chart ---
+        function renderHourlyChart(chartData) {
+            const ctx = document.getElementById('hourly-chart').getContext('2d');
+            const labels = chartData.labels.map(h => `${h}:00`);
+    
+            if (hourlyChart) {
+                hourlyChart.data.labels = labels;
+                hourlyChart.data.datasets[0].data = chartData.data;
+                hourlyChart.update();
+            } else {
+                hourlyChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Average Stork Count',
+                            data: chartData.data,
+                            backgroundColor: 'rgba(183, 230, 28, 0.6)',
+                            borderColor: 'rgba(183, 230, 28, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        scales: { y: { beginAtZero: true } }
+                    }
+                });
+            }
+        }
+    
+        function fetchHourlyData() {
+            fetch('/hourly_activity')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.labels) {
+                        renderHourlyChart(data);
+                    }
+                })
+                .catch(error => console.error('Error fetching hourly data:', error));
+        }
+    
+        // --- Main update function that calls everything ---
         function updateAllData() {
             fetchLatestDetection();
             fetchChartData();
+            fetchHourlyData();
         }
-
+    
         // Initial call when page loads
         updateAllData();
-
-        // Set interval to update every 10 seconds
+    
+        // Set interval to update everything
         setInterval(updateAllData, 10000);
     </script>
 </body>

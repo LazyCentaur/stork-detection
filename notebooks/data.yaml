@@ -1,9 +1,4 @@
-# Rutas al directorio de imágenes de entrenamiento y validación
 train: /Users/martaadmin/Documents/stork-watch-project/dataset/images/train
 val: /Users/martaadmin/Documents/stork-watch-project/dataset/images/val
-
-# Número de clases (solo tenemos una: "ciguena")
-nc: 1
-
-# Nombres de las clases
-names: ['ciguena']
+nc: 2
+names: ['adult', 'baby']

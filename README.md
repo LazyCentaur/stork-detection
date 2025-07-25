@@ -42,7 +42,12 @@ cd your-repository
 
 # 2. Create and activate a virtual environment
 python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+source venv/bin/activate
 
 # 3. Install the dependencies
 pip install -r requirements.txt
+
+### 2. Start project in local
+source venv/bin/activate
+./venv/bin/python3 src/realtime_detector.py
+./venv/bin/python3 src/app.py
