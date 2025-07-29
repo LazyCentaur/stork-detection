@@ -1,161 +1,191 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Stork Watcher</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Raleway:ital,wght@0,100..900;1,100..900&display=swap"
+        rel="stylesheet">
+
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.datatables.net/2.1.2/css/dataTables.dataTables.min.css">
+    <script src="https://cdn.datatables.net/2.1.2/js/dataTables.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="/static/css/style.css">
 </head>
+
 <body>
     <header>
-        <h1>🤖 AI Stork Watcher</h1>
-        <p>Showing the latest detection from the nest.</p>
+        <h1>AI Stork Watcher</h1>
+        <div class="header-right">
+            <p>Showing the latest detection from the nest.</p>
+        </div>
     </header>
 
-    <div class="sidebar">
-        <h2>Last Detection</h2>
-        <img id="detection-image" src="" alt="Waiting for detection...">
-        <p id="last-updated">Last updated: Never</p>
+    <nav class="tab-nav">
+        <button class="tab-btn active" data-tab="intro">Intro</button>
+        <button class="tab-btn" data-tab="dashboard">Dashboard</button>
+        <button class="tab-btn" data-tab="explorer">Explorer</button>
+    </nav>
 
-        <h3>Recent:</h3>
-        <div id="thumbnail-gallery" class="thumbnail-gallery"></div>
-    </div>
+    <main class="main-container">
+        <div id="intro" class="tab-content active">
+            <div class="intro-text full-page">
+                <h2>Project Summary: AI-Powered Stork Monitor</h2>
+                    <p>This project was born from the challenge of monitoring a stork nest with AI through a YouTube
+                        stream, transforming a simple video into a source of analytical data.</p>
+                    <p>Development was divided into three key phases, each with its own challenges and solutions:</p>
+                    <p><span class="bold">Data Collection:</span> The first hurdles focused on capturing unique images from a live stream,
+                        troubleshooting video buffer issues using a custom script. To ensure variety, we manually
+                        recorded specific rainy or nighttime scenes to enrich the dataset.</p>
+                    <p><span class="bold">Model Training:</span> The initial model failed in complex cases such as "occlusion" (storks blocking
+                        each other). The solution was an iterative process: we expanded the dataset with these difficult
+                        cases, refined the image labeling, and migrated to a more powerful AI model (YOLOv8s),
+                        significantly improving its accuracy.</p>
+                    <p><span class="bold">Web Application and Analysis:</span> The final phase consisted of building an interactive dashboard,
+                        overcoming challenges related to software configuration (Python/Flask) and file paths. To make
+                        the project more scalable and professional, we migrated the data storage from a simple CSV file
+                        to a SQLite database.</p>
+                    <hr>
+                    <br>
+                    <h2>Current and Future Status</h3>
+                    <p>Today, the system autonomously detects, collects, and visualizes data. Although the model is
+                        robust, the main challenge remains perfecting detection in cases of severe occlusion.</p>
+                    <p>The next steps will focus on further expanding the dataset with more examples and, in the future,
+                        implementing a memory tracking system to persistently identify each individual, even when they
+                        disappear from view for a while.</p>
 
-    <main class="main-content"> 
-        <div class="chart-container">
-            <h2>Detection History (Last 24h)</h2>
-            <canvas id="history-detection"></canvas>
-            <div>
-                <a href="/download_log" class="download-btn">Download History (.csv)</a>
+                    <hr class="separator">
+                    <br>
+                    <h3>Current nest under observation</h3>
+
+                    <div class="video-container">
+                        <iframe width="560" height="315"
+                            src="https://www.youtube.com/embed/5YITOvRxKWU?si=9ZNVsTs3q3RZrOAB&amp;controls=0"
+                            title="YouTube video player" frameborder="0"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                            referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+                    </div>
+
+                    <p class="video-credit">
+                        Thanks to the channel that provides this live stream.
+                        You can see the original at <a href="https://www.youtube.com/watch?v=5YITOvRxKWU"
+                            target="_blank" rel="noopener noreferrer">this link</a>.
+                    </p>
             </div>
+
+
         </div>
 
-        <div class="chart-container">
-            <h2>Average Activity per Hour</h2>
-            <canvas id="hourly-chart"></canvas>
+        <div id="dashboard" class="tab-content">
+
+            <div class="sidebar">
+                <h2>Last Detection</h2>
+                <img id="detection-image" src="" alt="Waiting for detection...">
+                <p id="last-updated">Last updated: Never</p>
+                <h3>Recent:</h3>
+                <div id="thumbnail-gallery" class="thumbnail-gallery"></div>
+            </div>
+
+            <div class="main-content">
+                <div class="kpi-container">
+                    <div class="kpi-card">
+                        <span class="kpi-value" id="kpi-current-count">-</span>
+                        <span class="kpi-label">Current Number</span>
+                    </div>
+                    <div class="kpi-card">
+                        <span class="kpi-value" id="kpi-nest-status">-</span>
+                        <span class="kpi-label">State of the Nest</span>
+                    </div>
+                    <div class="kpi-card">
+                        <span class="kpi-value" id="kpi-busiest-hour">-</span>
+                        <span class="kpi-label">Peak Activity Time</span>
+                    </div>
+                    <div class="kpi-card">
+                        <span class="kpi-value" id="kpi-last-seen">-</span>
+                        <span class="kpi-label">Last Detection</span>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <h2>Detection History (Last 24h)</h2>
+                    <div class="canvas-wrapper">
+                        <canvas id="stork-chart"></canvas>
+                    </div>
+                    <div>
+                        <a href="/download_log" class="download-btn">Download History (.csv)</a>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <h2>Average Activity per Hour</h2>
+                    <div class="canvas-wrapper">
+                        <canvas id="hourly-chart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <h2>Daily Activity (Last 7 Days)</h2>
+                    <div class="canvas-wrapper">
+                        <canvas id="daily-chart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-container pie-chart-container">
+                    <h2>Nest Occupation (Last 24h)</h2>
+                    <div class="canvas-wrapper">
+                        <canvas id="occupancy-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <div id="explorer" class="tab-content">
+            <div class="main-content-full">
+                <div class="filter-container">
+                    <form id="filter-form">
+                        <div class="form-group">
+                            <label for="count_operator">Storks:</label>
+                            <select id="count_operator">
+                                <option value=">=" selected>&ge;</option>
+                                <option value="<=">&le;</option>
+                                <option value="=">=</option>
+                                <option value=">">&gt;</option>
+                                <option value="<">&lt;</option>
+                            </select>
+                            <input type="number" id="stork_count" placeholder="Ej: 2" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="start_date">From:</label>
+                            <input type="date" id="start_date">
+                        </div>
+                        <div class="form-group">
+                            <label for="end_date">To:</label>
+                            <input type="date" id="end_date">
+                        </div>
+                        <button type="submit">Apply</button>
+                        <button type="button" id="reset-btn">Reset</button>
+                    </form>
+                </div>
+                <div class="table-container">
+                    <table id="detections-table" class="display" style="width:100%">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Timestamp</th>
+                                <th>Stork Count</th>
+                                <th>Image Filename</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </main>
 
-    <script>
-        let storkChart, hourlyChart; // We now have two chart instances
-    
-        // --- Functions for the image and LINE chart ---
-        function fetchLatestDetection() {
-            fetch('/latest_detection')
-                .then(response => response.json())
-                .then(data => {
-                    const gallery = document.getElementById('thumbnail-gallery');
-                    gallery.innerHTML = ''; // Clear old thumbnails
-
-                    if (data.recent_files && data.recent_files.length > 0) {
-                        // The first image in the list is the most recent one
-                        const latestImageFile = data.recent_files[0];
-                        const imageUrl = '/detections/' + latestImageFile + '?t=' + new Date().getTime();
-                        
-                        document.getElementById('detection-image').src = imageUrl;
-                        document.getElementById('last-updated').innerText = 'Last updated: ' + new Date().toLocaleTimeString();
-
-                        // Loop through the rest of the images (from the 2nd to the 6th) to create thumbnails
-                        for (let i = 1; i < data.recent_files.length; i++) {
-                            const thumbUrl = '/detections/' + data.recent_files[i];
-                            const imgElement = document.createElement('img');
-                            imgElement.src = thumbUrl;
-                            gallery.appendChild(imgElement);
-                        }
-                    }
-                })
-                .catch(error => console.error('Error fetching detections:', error));
-        }
-    
-        function renderDetectionChart(chartData) {
-            const ctx = document.getElementById('history-detection').getContext('2d');
-            if (storkChart) {
-                storkChart.data.labels = chartData.labels;
-                storkChart.data.datasets[0].data = chartData.data;
-                storkChart.update();
-            } else {
-                storkChart = new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels: chartData.labels,
-                        datasets: [{
-                            label: 'Number of Storks Detected',
-                            data: chartData.data,
-                            borderColor: 'rgb(75, 192, 192)',
-                            tension: 0.1
-                        }]
-                    },
-                    options: {
-                        scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
-                    }
-                });
-            }
-        }
-    
-        function fetchChartData() {
-            fetch('/detection_data')
-                .then(response => response.json())
-                .then(data => {
-                    if (data.labels) {
-                        renderDetectionChart(data);
-                    }
-                })
-                .catch(error => console.error('Error fetching line chart data:', error));
-        }
-    
-        // --- Functions for the BAR chart ---
-        function renderHourlyChart(chartData) {
-            const ctx = document.getElementById('hourly-chart').getContext('2d');
-            const labels = chartData.labels.map(h => `${h}:00`);
-    
-            if (hourlyChart) {
-                hourlyChart.data.labels = labels;
-                hourlyChart.data.datasets[0].data = chartData.data;
-                hourlyChart.update();
-            } else {
-                hourlyChart = new Chart(ctx, {
-                    type: 'bar',
-                    data: {
-                        labels: labels,
-                        datasets: [{
-                            label: 'Average Stork Count',
-                            data: chartData.data,
-                            backgroundColor: 'rgba(183, 230, 28, 0.6)',
-                            borderColor: 'rgba(183, 230, 28, 1)',
-                            borderWidth: 1
-                        }]
-                    },
-                    options: {
-                        scales: { y: { beginAtZero: true } }
-                    }
-                });
-            }
-        }
-    
-        function fetchHourlyData() {
-            fetch('/hourly_activity')
-                .then(response => response.json())
-                .then(data => {
-                    if (data.labels) {
-                        renderHourlyChart(data);
-                    }
-                })
-                .catch(error => console.error('Error fetching hourly data:', error));
-        }
-    
-        // --- Main update function that calls everything ---
-        function updateAllData() {
-            fetchLatestDetection();
-            fetchChartData();
-            fetchHourlyData();
-        }
-    
-        // Initial call when page loads
-        updateAllData();
-    
-        // Set interval to update everything
-        setInterval(updateAllData, 10000);
-    </script>
+    <script src="/static/js/main.js"></script>
 </body>
+
 </html>

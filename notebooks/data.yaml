@@ -1,4 +1,0 @@
-train: /Users/martaadmin/Documents/stork-watch-project/dataset/images/train
-val: /Users/martaadmin/Documents/stork-watch-project/dataset/images/val
-nc: 2
-names: ['adult', 'baby']
